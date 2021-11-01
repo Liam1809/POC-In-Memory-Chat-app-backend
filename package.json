@@ -1,0 +1,31 @@
+{
+  "name": "poc-in-memory-chat-app-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Liam1809/POC-In-Memory-Chat-app-backend.git"
+  },
+  "author": "Liam Ha",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Liam1809/POC-In-Memory-Chat-app-backend/issues"
+  },
+  "homepage": "https://github.com/Liam1809/POC-In-Memory-Chat-app-backend#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "moment": "^2.29.1",
+    "nodemon": "^2.0.14",
+    "redis": "^3.1.2",
+    "socket.io": "^4.3.1"
+  }
+}
