@@ -8,7 +8,7 @@ import { createServer } from 'http';
 
 //import routes
 import roomRouter from './routes/room.js';
-import chatRouter from './routes/chat.js';
+import userRouter from './routes/user.js';
 
 dotenv.config();
 const app = express();
@@ -21,7 +21,7 @@ app.use(cors());
 // room router
 app.use('/room', roomRouter);
 // chat router
-app.use('/chat', chatRouter);
+app.use('/user', userRouter);
 
 app.get('/', (req, res) => {
   res.send('Hello to In-Memory Chat Room Server');
