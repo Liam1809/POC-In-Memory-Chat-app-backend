@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
@@ -8,6 +9,7 @@ import { createServer } from 'http';
 //import routes
 import roomRouter from './routes/room.js';
 import chatRouter from './routes/chat.js';
+
 dotenv.config();
 const app = express();
 const server = createServer(app);
@@ -37,6 +39,38 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () => {
-  console.log(`Server is listerning on port: ${PORT}`);
-});
+// connect to mongoDB
+mongoose
+  .connect(process.env.CONNECTION_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() =>
+    server.listen(PORT, () =>
+      console.log(`Server is listening on PORT: ${PORT}`)
+    )
+  )
+  .catch(error => console.log(error.message));
+
+/* 
+
+flow: 
+user register acc, login de vo phong
+
+room
+- get all room
+- get room
+- create rooom - expiry time
+- update room 
+- delete room
+
+}
+
+user: {
+
+}
+
+chat: {
+    
+}
+*/
