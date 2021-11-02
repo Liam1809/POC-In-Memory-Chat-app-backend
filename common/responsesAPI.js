@@ -11,4 +11,4 @@ const responses = {
   _403: data => responseGenerator(403, data),
 };
 
-module.exports = responses;
+export default responses;
