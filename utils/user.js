@@ -11,7 +11,7 @@ export const addUser = ({ userID, userName, room }) => {
 
     users.push(User);
 
-    return { user: User };
+    return User;
   } catch (error) {
     console.log(error.message);
   }
