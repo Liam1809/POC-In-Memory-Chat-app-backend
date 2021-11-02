@@ -1,38 +1,9 @@
 // import redis client
-import { set, setex, get, mget, scanAll } from '../common/redisClient.js';
+import { set, setex, get, del, mget, scanAll } from '../common/redisClient.js';
+
 // import API responses
 import responses from '../common/responsesAPI.js';
 
-// const data = {
-//   firstName: 'Liam',
-//   lastName: 'Ha',
-//   age: 22,
-// };
-
-// export const getTesting = async (req, res) => {
-//   try {
-//     // TESTING
-//     await set('fullName:hello:user1', JSON.stringify(data));
-//     await set('fullName:hello1:user1', JSON.stringify(data));
-//     await set('fullName:hello2:user1', JSON.stringify(data));
-//     await set('fullName:hello:user2', JSON.stringify(data));
-//     await set('fullName:hello1:user2', JSON.stringify(data));
-//     await set('fullName:hello2:user2', JSON.stringify(data));
-
-//     // const data1 = await get('fullName:user1');
-//     // console.log(JSON.parse(data1));
-//     const scannedData = await scanAll('fullName:*:user1');
-//     console.log('this is scanned data', scannedData, scannedData.length);
-
-//     // const datalol = await mget(scannedData);s
-
-//     // console.log(datalol.map(element => JSON.parse(element)));
-
-//     responses._201(res, data);
-//   } catch (error) {
-//     responses._500(res, { message: error.message });
-//   }
-// };
 // GET ALL ROOMS
 export const getAllRooms = async (req, res) => {
   try {
@@ -59,18 +30,16 @@ export const getAllRooms = async (req, res) => {
 // CREATE NEW ROOM
 export const createRoom = async (req, res) => {
   try {
-    const { roomName, isExpired, roomExpiredIn } = req.body;
+    const { roomName, roomExpiredIn } = req.body;
 
-    // if no roomName and no userName
-    if (!roomName & !userName)
-      responses._404(res, { message: 'roomName and userName required.' });
+    // if no roomName
+    if (!roomName) responses._404(res, { message: 'roomName is required.' });
 
-    // check if roomName exists
+    // check if keys with roomName exists
     const existingKey = await scanAll(`room:${roomName}:${req.userName}`);
 
-    // if keys existed
-    if (existingKey.length > 0)
-      responses._401(res, { message: 'roomName exists' });
+    // if keys exists
+    if (existingKey.length > 0) responses._401(res, { message: 'room exists' });
 
     // create new room
     const newRoom = {
@@ -79,27 +48,8 @@ export const createRoom = async (req, res) => {
       createdAt: new Date().toDateString(),
     };
 
-    // if expired activated and roomExpiredIn is set as number > 0
-    if (isExpired) {
-      // check roomExpiredIn time
-      if (!roomExpiredIn && parseInt(roomExpiredIn) < 0)
-        responses._404(res, { message: 'Invalid expire time.' });
-
-      // set DB with expire time
-      await setex(
-        `room:${newRoom.roomName}:${newRoom.creator}`,
-        parseInt(roomExpiredIn),
-        JSON.stringify(newRoom)
-      );
-
-      // if no activatted expired time
-    } else {
-      // set DB without expire time
-      await set(
-        `room:${newRoom.roomName}:${newRoom.creator}`,
-        JSON.stringify(newRoom)
-      );
-    }
+    // set Expire Time
+    await setExpireTime(newRoom, req.userName, roomExpiredIn);
 
     // send newRoom
     responses._201(res, newRoom);
@@ -111,6 +61,40 @@ export const createRoom = async (req, res) => {
 // UPDATE CURRENT ROOM
 export const updateRoom = async (req, res) => {
   try {
+    const { name } = req.params;
+    const { roomName, roomExpiredIn } = req.body;
+
+    // if no name param
+    if (!name) responses._400(res, { message: 'No room name param' });
+    // if no roomName req.body
+    if (!roomName) responses._404(res, { message: 'roomName is required.' });
+
+    // check if keys with name exists
+    const existingKey1 = await scanAll(`room:${name}:${req.userName}`);
+    // check if keys with roomName exists
+    const existingKey2 = await scanAll(`room:${roomName}:${req.userName}`);
+
+    // if keys not exists
+    if (existingKey1.length <= 0)
+      responses._401(res, { message: 'room does not exist' });
+    // if keys exists
+    if (existingKey2.length > 0)
+      responses._401(res, { message: 'roomName already taken' });
+
+    //get room's value
+    const roomData = JSON.parse(await get(existingKey1[0]));
+
+    // create update room
+    const updatedRoom = { ...roomData, roomName: roomName };
+
+    // delete old key
+    await del(`room:${name}:${req.userName}`);
+
+    // set Expire Time
+    await setExpireTime(updatedRoom, req.userName, isExpired, roomExpiredIn);
+
+    // send updatedRoom
+    responses._200(res, updatedRoom);
   } catch (error) {
     responses._500(res, { message: error.message });
   }
@@ -119,7 +103,42 @@ export const updateRoom = async (req, res) => {
 // DELETE CURRENT ROOM
 export const deleteRoom = async (req, res) => {
   try {
+    const { name } = req.params;
+
+    // if no param
+    if (!name) responses._400(res, { message: 'No room name param' });
+
+    // check if keys with name exists
+    const existingKey = await scanAll(`room:${name}:${req.userName}`);
+
+    // if keys not exists
+    if (existingKey.length < 0)
+      responses._401(res, { message: 'room does not exist' });
+
+    // delete
+    await del(`room:${name}:${req.userName}`);
+
+    // send no-content body request
+    responses._204(res, { message: 'succesfully deleted' });
   } catch (error) {
     responses._500(res, { message: error.message });
+  }
+};
+
+// set Expire Time func
+const setExpireTime = async (room, userName, roomExpiredIn) => {
+  // if activated expired time
+  if (roomExpiredIn) {
+    // set DB with expire time
+    await setex(
+      `room:${room.roomName}:${userName}`,
+      parseInt(roomExpiredIn),
+      JSON.stringify(room)
+    );
+
+    // if no activatted
+  } else {
+    // set DB without expire time
+    await set(`room:${room.roomName}:${userName}`, JSON.stringify(room));
   }
 };

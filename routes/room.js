@@ -2,7 +2,6 @@ import express from 'express';
 
 // import action controllers
 import {
-  // getTesting,
   getAllRooms,
   createRoom,
   updateRoom,
@@ -14,10 +13,9 @@ import auth from '../middlewares/auth.js';
 
 const router = express.Router();
 
-// router.get('/getTesting', getTesting);
 router.get('/', auth, getAllRooms);
 router.post('/', auth, createRoom);
-router.patch('/:roomName', auth, updateRoom);
-router.delete('/:roomName', auth, deleteRoom);
+router.patch('/:name', auth, updateRoom);
+router.delete('/:name', auth, deleteRoom);
 
 export default router;
