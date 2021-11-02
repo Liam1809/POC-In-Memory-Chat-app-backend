@@ -58,6 +58,8 @@ flow:
 user register acc, login de vo phong
 
 room
+user:userName
+room:roomName:userName
 - get all room
 - get room
 - create rooom - expiry time
