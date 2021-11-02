@@ -8,6 +8,7 @@ const client = Redis.createClient();
 export const set = util.promisify(client.set).bind(client);
 export const setex = util.promisify(client.setex).bind(client);
 export const get = util.promisify(client.get).bind(client);
+export const mget = util.promisify(client.mget).bind(client);
 
 const scan = util.promisify(client.scan).bind(client);
 
